@@ -3,6 +3,7 @@ var Handlebars = require('handlebars');
 var path = require('path');
 var gutil = require('gulp-util');
 var extend = require('xtend');
+var compiler = require('ember-template-compiler');
 
 // Return a declaration and namespace name for output
 var getNSInfo = function(ns, omitLast) {
@@ -40,7 +41,7 @@ module.exports = function(options) {
     compilerOptions: {},
     declareNamespace: true,
     wrapped: true,
-    outputType: 'browser', // browser, amd, commonjs, node, hybrid, bare
+    outputType: 'amd', // browser, amd, commonjs, node, hybrid, bare
     processName: defaultProcessName,
     namespace: 'templates'
   }, options);
@@ -56,14 +57,14 @@ module.exports = function(options) {
 
     // Perform pre-compilation
     try {
-      var compiled = Handlebars.precompile(file.contents.toString(), options.compilerOptions);
+      var compiled = compiler.precompile(file.contents.toString()).toString();
     }
     catch(err) {
       return callback(err, file);
     }
 
     if (options.wrapped) {
-      compiled = 'Handlebars.template('+compiled+')';
+      compiled = 'Ember.Handlebars.template('+compiled+')';
     }
 
     // Handle different output times
@@ -102,7 +103,16 @@ module.exports = function(options) {
       }
     }
     else if (options.outputType === 'amd') {
-      compiled = "define(['handlebars'], function(Handlebars) {return "+compiled+";});";
+      var fileName = file.path.split("/");
+          if(fileName[fileName.length-2] == "components"){
+            // console.log(fileName[fileName.length-2], fileName[fileName.length-1]);
+            fileName = "appkit/templates/"+fileName[fileName.length-2]+"/"+fileName[fileName.length-1].replace(/\.[^/.]+$/, "");
+          }else{
+            fileName = "appkit/"+fileName[fileName.length-2]+"/"+fileName[fileName.length-1].replace(/\.[^/.]+$/, "");
+          }
+
+          
+      compiled = "define('"+fileName+"', [\"exports\"], function(a) { a[\"default\"] = "+compiled+";});";
     }
     else if (options.outputType === 'commonjs') {
       compiled = "module.exports = function(Handlebars) {return "+compiled+";};";
