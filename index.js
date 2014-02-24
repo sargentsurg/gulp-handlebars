@@ -112,7 +112,7 @@ module.exports = function(options) {
           }
 
           
-      compiled = "define('"+fileName+"', [\"exports\"], function(a) { a[\"default\"] = "+compiled+";});";
+      compiled = "define('"+fileName+"', [\"exports\"], function(_exports_) { _exports_[\"default\"] = "+compiled+";});";
     }
     else if (options.outputType === 'commonjs') {
       compiled = "module.exports = function(Handlebars) {return "+compiled+";};";
