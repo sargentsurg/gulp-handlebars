@@ -4,6 +4,7 @@ var path = require('path');
 var gutil = require('gulp-util');
 var extend = require('xtend');
 var compiler = require('ember-template-compiler');
+var _ = require('underscore');
 
 // Return a declaration and namespace name for output
 var getNSInfo = function(ns, omitLast) {
@@ -104,14 +105,22 @@ module.exports = function(options) {
     }
     else if (options.outputType === 'amd') {
       var fileName = file.path.split("/");
-          if(fileName[fileName.length-2] == "components"){
-            // console.log(fileName[fileName.length-2], fileName[fileName.length-1]);
-            fileName = "appkit/templates/"+fileName[fileName.length-2]+"/"+fileName[fileName.length-1].replace(/\.[^/.]+$/, "");
-          }else{
-            fileName = "appkit/"+fileName[fileName.length-2]+"/"+fileName[fileName.length-1].replace(/\.[^/.]+$/, "");
-          }
+          var finalFileName = [];
+          for (var i = fileName.length - 1; i >= 0; i--) {
+            if(fileName[i] === "templates"){
+              finalFileName.push(fileName[i]);
+              finalFileName.reverse()
+              break;
+            }
 
-          
+            finalFileName.push(fileName[i].replace(/\.[^/.]+$/, ""));
+          };
+
+
+          finalFileName = finalFileName.toString();
+          finalFileName = finalFileName.replace(/,/g, "/");
+          fileName = options.namespace+"/"+finalFileName;
+
       compiled = "define('"+fileName+"', [\"exports\"], function(_exports_) { _exports_[\"default\"] = "+compiled+";});";
     }
     else if (options.outputType === 'commonjs') {
